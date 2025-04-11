@@ -10,7 +10,7 @@ class MyApp extends StatelessWidget {
       home:
       Scaffold(
         appBar: AppBar(
-          title: Text('esscale App',
+          title: Text('esscale Apps',
             style: TextStyle(
                 fontSize: 40,
                 fontWeight: FontWeight.bold,
