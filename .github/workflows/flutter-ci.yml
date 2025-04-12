@@ -25,15 +25,19 @@ jobs:
           cache: true
 
       - name: Install dependencies
+        working-directory: ./frontend
         run: |
+          flutter pub upgrade --major-versions
           flutter pub get
           flutter pub run build_runner build --delete-conflicting-outputs
         env:
           FLUTTER_PUB_CACHE: /tmp/flutter_pub_cache
 
       - name: Run tests
+        working-directory: ./frontend
         run: flutter test --test-randomize-ordering-seed=random
 
       - name: Build debug APK
+        working-directory: ./frontend
         if: github.ref == 'refs/heads/dev'
         run: flutter build apk --debug
