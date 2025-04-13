@@ -35,6 +35,7 @@ using namespace std::placeholders;
 using error_handler = std::function<void()>;
 using message_handler = std::function<void(const std::string&)>;
 
+//Enumeration of package types
 enum packettype{
     P_message,
     P_id,
@@ -47,6 +48,7 @@ MYLIB_EXPORT std::string extract_until_space(const std::string& input);
 
 MYLIB_EXPORT void remove_until_space(std::string& str);
 
+//A class for handling a separate connection
 class MYLIB_EXPORT session: public std::enable_shared_from_this<session> {
     private:
         ssl::stream<tcp::socket> ssl_socket;
@@ -128,6 +130,7 @@ class MYLIB_EXPORT session: public std::enable_shared_from_this<session> {
         MYLIB_EXPORT tcp::socket& get_soc();
   };
   
+  //A class for handling all connections
   class MYLIB_EXPORT server {
     private:
         io::io_context& io_context;

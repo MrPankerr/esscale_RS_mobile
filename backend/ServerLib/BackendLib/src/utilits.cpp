@@ -1,5 +1,10 @@
 #include "utilits.hpp"
 
+
+//----------------------------------Auxiliary functions----------------------------------------------//
+
+
+//checking whether the contents of a string are an int number. For correct ID reading
 bool is_integer(const std::string& s) 
 {
     try {
@@ -11,6 +16,8 @@ bool is_integer(const std::string& s)
     }
 }
 
+//the function runs through the contents of the line 
+//to the first space and outputs the contents of this line to the space. For correct ID reading
 std::string extract_until_space(const std::string& input) 
 {
     std::string result;
@@ -21,6 +28,8 @@ std::string extract_until_space(const std::string& input)
     return result;
 }
 
+//deletes everything that was in the line before the first space. 
+//To extract a text message without an ID from a string
 void remove_until_space(std::string& str) 
 {
     size_t space_pos = str.find(' ');
@@ -31,13 +40,19 @@ void remove_until_space(std::string& str)
     }
 }
 
-//Session
+
+
+//-------------------------------------Session Methods-----------------------------------------------//
+
+
+//Function for changing event handlers
 void session::handler_move(message_handler&& on_message, error_handler&& on_error)
 {
     this->on_message = std::move(on_message);
     this->on_error = std::move(on_error);
 }
 
+//Asynchronous reading of information sent by the client
 void session::start(message_handler&& on_message, error_handler&& on_error) 
 {
     this->on_message = std::move(on_message);
@@ -48,6 +63,8 @@ void session::start(message_handler&& on_message, error_handler&& on_error)
     async_read();
 }
 
+
+//A function for sending a message to a client
 void session::post(const std::string& message)
 {
     bool idle = outgoing.empty();
@@ -58,6 +75,7 @@ void session::post(const std::string& message)
     }
 }
 
+//A function for closing a connection with a client
 void session::session_close()
 {
     error_code ec;
@@ -66,6 +84,7 @@ void session::session_close()
     on_error();
 }
 
+//Function for TLS handshake
 void session::async_handshake() 
 {
     ssl_socket.async_handshake(ssl::stream_base::server,
@@ -78,9 +97,14 @@ void session::async_handshake()
         });
 }
 
+//A function for extracting a socket from a class
 tcp::socket& session::get_soc(){ return ssl_socket.next_layer(); }
 
-//Server
+
+//-------------------------------------Server Methods-------------------------------------------------//
+
+
+//Connection processing function
 void server::async_accept() 
 {
     socket.emplace(io_context);
@@ -128,6 +152,7 @@ void server::async_accept()
     });
 }
 
+//A function for interacting with workers
 void server::post_W(std::map<std::string, std::string> packet, std::shared_ptr<session> Client )
 {
     int pt = std::stoi(packet["Packet_type"]);
@@ -158,6 +183,7 @@ void server::post_W(std::map<std::string, std::string> packet, std::shared_ptr<s
     
 }
 
+//A function for interacting with employers
 void server::post_E(std::map<std::string, std::string> packet, std::shared_ptr<session> Client )
 {
     int pt = std::stoi(packet["Packet_type"]);
@@ -188,6 +214,7 @@ void server::post_E(std::map<std::string, std::string> packet, std::shared_ptr<s
     
 }
 
+//A function for authorization and registration of clients
 void server::post(std::map<std::string, std::string> packet, std::shared_ptr<session> Client)
 {
     int pt = std::stoi(packet["Packet_type"]);
