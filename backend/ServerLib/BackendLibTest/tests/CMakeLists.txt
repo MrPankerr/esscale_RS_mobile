@@ -17,6 +17,15 @@ add_executable(test_utils
     test_utils.cpp
 )
 
+# Копируем backend_lib.dll в директорию с test_utils.exe для Windows
+if(WIN32)
+    add_custom_command(TARGET test_utils POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:backend_lib>
+        $<TARGET_FILE_DIR:test_utils>
+    )
+endif()
+
 # Связь тестов с библиотекой и Google Test
 target_link_libraries(test_utils
     PRIVATE backend_lib

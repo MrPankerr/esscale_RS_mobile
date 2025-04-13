@@ -1,0 +1,84 @@
+name: Manual CI
+
+on:
+  workflow_dispatch:  # Ручной запуск
+
+jobs:
+  backend-build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Get repository code
+        uses: actions/checkout@v4
+        with: 
+          fetch-depth: 0
+
+      - name: Cache Google Test
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/googletest
+            ./backend/build/googletest
+          key: ${{ runner.os }}-googletest-${{ hashFiles('backend/tests/CMakeLists.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-googletest-
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ libssl-dev
+
+      - name: Configure CMake and build project
+        working-directory: ./backend
+        shell: bash
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+          cmake --build . --parallel 4
+
+      - name: Run tests
+        working-directory: ./backend/build
+        run: |
+          ctest --output-on-failure
+
+  frontend-build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Get repository code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.29.2"
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: |
+          flutter pub get
+          flutter pub run build_runner build --delete-conflicting-outputs
+        env:
+          FLUTTER_PUB_CACHE: /tmp/flutter_pub_cache
+
+      - name: Run tests
+        working-directory: ./frontend
+        run: flutter test --test-randomize-ordering-seed=random
+
+      - name: Build release APK
+        working-directory: ./frontend
+        run: flutter build apk --release
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release.apk
+          path: ./frontend/build/app/outputs/flutter-apk/app-release.apk

@@ -1,0 +1,62 @@
+cmake_minimum_required(VERSION 3.22)
+
+project(Backend)
+
+set(${PROJECT_NAME}_VERSION_MAJOR 0)
+set(${PROJECT_NAME}_VERSION_MINOR 1)
+
+set(${PROJECT_NAME}_VERSION "${${PROJECT_NAME}_VERSION_MAJOR}.${${PROJECT_NAME}_VERSION_MINOR}")
+set(CMAKE_CXX_STANDARD 17) 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+
+include_directories("${PROJECT_SOURCE_DIR}/include")
+
+cmake_policy(SET CMP0144 NEW)
+cmake_policy(SET CMP0167 NEW)
+set(BOOST_ROOT "C:/boost_1_78_0")
+set(Boost_INCLUDE_DIR "C:/boost_1_78_0/build/include/boost-1_78")
+set(Boost_NO_SYSTEM_PATHS ON)
+set(Boost_USE_STATIC_RUNTIME ON)
+set(Boost_USE_STATIC_LIBS ON)
+
+set(OPENSSL_ROOT_DIR "C:/msys64/mingw64")
+set(OPENSSL_INCLUDE_DIR "${OPENSSL_ROOT_DIR}/include")
+set(OPENSSL_LIB_DIR "${OPENSSL_ROOT_DIR}/lib")
+
+set(OPENSSL_SSL_LIBRARY "${OPENSSL_LIB_DIR}/libssl.dll.a")
+set(OPENSSL_CRYPTO_LIBRARY "${OPENSSL_LIB_DIR}/libcrypto.dll.a")
+
+if(MINGW)
+    link_libraries(Ws2_32 wsock32)
+endif()
+
+
+set(Boost_DIR "C:/boost_1_78_0/build/lib/cmake/Boost-1.78.0")
+find_package(Boost 1.78.0 REQUIRED COMPONENTS system regex)
+
+find_package(OpenSSL REQUIRED)
+
+message(STATUS "OpenSSL include dir: ${OPENSSL_INCLUDE_DIR}")
+message(STATUS "OpenSSL libraries: ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY}")
+
+if(NOT Boost_FOUND)
+    message(FATAL_ERROR "Could not find Boost! Please make sure it is installed correctly and BOOST_ROOT is set properly.")
+endif()
+
+add_library(${PROJECT_NAME} SHARED
+                 	src/utilits.cpp
+                 )
+
+target_include_directories(${PROJECT_NAME} PUBLIC ${Boost_INCLUDE_DIR})
+target_link_libraries(${PROJECT_NAME}
+                Boost::system
+                Boost::regex
+                OpenSSL::SSL
+                OpenSSL::Crypto
+                )
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/CMakeLists.txt")
+    add_subdirectory(tests)
+endif()
+            
+enable_testing()
