@@ -37,13 +37,3 @@ jobs:
         working-directory: ./backend/build
         run: |
           ctest --output-on-failure
-
-      - name: Upload artifacts
-        if: success()
-        uses: actions/upload-artifact@v3
-        with:
-          name: backend-linux-binaries
-          path: |
-            backend/build/esscale_backend
-            backend/build/**/*.so
-            backend/build/**/*.a
