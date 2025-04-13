@@ -1,0 +1,8 @@
+# Артефакты сборки
+CMakeCache.txt
+CMakeFiles/
+Makefile
+*.a
+*.so
+*.dll
+*.exe

@@ -1,0 +1,49 @@
+name: C++ CI
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [dev, master]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Get repository code
+        uses: actions/checkout@v4
+        with: 
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ libssl-dev		
+
+      - name: Configure CMake and build project
+        working-directory: ./backend
+        shell: bash
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+          cmake --build . --parallel 4
+
+      - name: Run tests
+        working-directory: ./backend/build
+        run: |
+          ctest --output-on-failure
+
+      - name: Upload artifacts
+        if: success()
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-linux-binaries
+          path: |
+            backend/build/esscale_backend
+            backend/build/**/*.so
+            backend/build/**/*.a

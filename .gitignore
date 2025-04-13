@@ -1,0 +1,19 @@
+# Общие системные файлы
+.DS_Store
+*.swp
+*.bak
+*.tmp
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.user
+
+# Логи и кэши
+*.log
+*.cache
+
+# Автогенерируемые файлы
+build/
+dist/
