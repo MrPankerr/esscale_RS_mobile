@@ -16,8 +16,6 @@ static void cmd_parse(const int ac, char** av)
 {
     po::options_description desc("Allowed options");
 
-    std::cout << av << std::endl;
-
     desc.add_options()
         ("help,h", "produce help message")
         ("version,v",  "Show version of program")
@@ -30,14 +28,17 @@ static void cmd_parse(const int ac, char** av)
  
     if (vm.count("help")) {
         std::cout << desc << "\n";
+        exit(0);
     }
  
     else if (vm.count("version")) {
         std::cout << "Version: " << g_version << std::endl;
+        exit(0);
     }
 
     else if (vm.count("path")){
         std::cout << "Path to source of the program: " << g_sourse_path << std::endl;
 	    std::cout << "Path to binary of the program: " << g_binary_path << std::endl;
+        exit(0);
     }
 }

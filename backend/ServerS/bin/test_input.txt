@@ -1,1 +1,0 @@
-openssl s_client -connect localhost:15001 -ign_eof -quiet

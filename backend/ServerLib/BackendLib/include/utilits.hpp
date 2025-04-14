@@ -24,7 +24,7 @@
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 #include <openssl/ssl.h>
-#include "C:/Project/Reiting/ServerS/include/Data.hpp"
+#include "C:/Project/Reiting/esscale_RS/backend/ServerS/include/Data.hpp" //specify your path
 
 namespace io = boost::asio;
 namespace ssl = io::ssl;
@@ -158,8 +158,8 @@ class MYLIB_EXPORT session: public std::enable_shared_from_this<session> {
 
                 SSL_CTX_set1_curves_list(ssl_context.native_handle(), "prime256v1");
                 
-                ssl_context.use_certificate_chain_file("server.crt");
-                ssl_context.use_private_key_file("server.key", ssl::context::pem);
+                ssl_context.use_certificate_chain_file("../TLSsecret/server.crt");
+                ssl_context.use_private_key_file("../TLSsecret/server.key", ssl::context::pem);
             }
   
         MYLIB_EXPORT void async_accept();

@@ -2,9 +2,7 @@
 CMakeCache.txt
 CMakeFiles/
 Makefile
-*.a
 *.o
 *.so
-*.dll
 *.exe
 build/

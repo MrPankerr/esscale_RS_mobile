@@ -54,9 +54,3 @@ target_link_libraries(${PROJECT_NAME}
                 OpenSSL::SSL
                 OpenSSL::Crypto
                 )
-
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/CMakeLists.txt")
-    add_subdirectory(tests)
-endif()
-            
-enable_testing()

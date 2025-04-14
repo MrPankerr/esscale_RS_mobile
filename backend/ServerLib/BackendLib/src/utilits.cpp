@@ -229,8 +229,6 @@ void server::post(std::map<std::string, std::string> packet, std::shared_ptr<ses
         if(!id.empty()) { id.pop_back(); }
         if(!id.empty()) { id.pop_back(); }
 
-        std::cout << id << ' ' << id << std::endl;
-
         if (ID_Employer.find(id) != ID_Employer.end()) 
         {
             Client->handler_move(
