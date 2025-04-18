@@ -40,6 +40,16 @@ void remove_until_space(std::string& str)
     }
 }
 
+void gen_id(std::string id)
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> distr(0, 100000);
+    int random_number = distr(gen);
+
+    id = std::to_string(random_number);
+    if(ID_Worker.find(id) != ID_Worker.end()) { gen_id(id); }
+}
 
 
 //-------------------------------------Session Methods-----------------------------------------------//
@@ -92,6 +102,9 @@ void session::async_handshake()
             if (!error) {
                 self->async_read();
             } else {
+                error_code ec;
+                self->ssl_socket.shutdown(ec);
+                self->ssl_socket.lowest_layer().close();
                 self->on_error();
             }
         });
@@ -114,18 +127,17 @@ void server::async_accept()
 
         if (socket.has_value()) 
         {
-            addr << socket.value().remote_endpoint(error) << ": ";
+            addr << socket.value().remote_endpoint(error);
             std::cout << addr.str() << "New connection" << std::endl;
         } 
         else 
         {
             std::cout << "Error: Socket is not initialized." << std::endl;
         }
+        std::string addr_str = addr.str();
 
         auto client = std::make_shared<session>(std::move(*socket), ssl_context);
-        clients.insert(client);
-
-        std::string addr_str = addr.str();
+        clients[addr_str] = client;
 
         client->start(
             [this, shared_client = client, addr_str](const std::string& message) {
@@ -138,13 +150,9 @@ void server::async_accept()
                 packet["Message"] = mes; 
                 post(packet, shared_client);
             },
-            [this, weak = std::weak_ptr(client)] { 
-                 if (auto shared = weak.lock(); shared && clients.erase(shared)) {
-                        std::map<std::string, std::string> packet;
-                        packet["Addres"] = "Server";
-                        packet["Packet_type"] = "0";
-                        packet["Message"] = "We are one less\n\r";
-                        post(packet, shared);
+            [this, weak = std::weak_ptr(client), addr_str] { 
+                 if (auto shared = weak.lock(); shared && clients.erase(addr_str)) {
+                        std::cout << "We are one less\n\r";
                 }
             });
 
@@ -157,14 +165,14 @@ void server::post_W(std::map<std::string, std::string> packet, std::shared_ptr<s
 {
     int pt = std::stoi(packet["Packet_type"]);
 
-    packettype pac_type = packettype(pt);
+    packettypein pac_type = packettypein(pt);
     switch (pac_type)
     {
     case P_message:
     {
         for (auto& client : clients) {
-            client->post(packet["Addres"]);
-            client->post(packet["Message"]);
+            client.second->post(packet["Addres"]);
+            client.second->post(packet["Message"]);
         }
         break;
     }
@@ -188,15 +196,60 @@ void server::post_E(std::map<std::string, std::string> packet, std::shared_ptr<s
 {
     int pt = std::stoi(packet["Packet_type"]);
 
-    packettype pac_type = packettype(pt);
+    packettypein pac_type = packettypein(pt);
     switch (pac_type)
     {
     case P_message:
     {
         for (auto& client : clients) {
-            client->post(packet["Addres"]);
-            client->post(packet["Message"]);
+            client.second->post(packet["Addres"]);
+            client.second->post(packet["Message"]);
         }
+        break;
+    }
+    case P_confirmation:
+    {
+        std::string conf = extract_until_space(packet["Message"]);
+        remove_until_space(packet["Message"]);
+        std::string Addr = extract_until_space(packet["Message"]);
+        remove_until_space(packet["Message"]);
+
+        if(conf == "No") { clients[Addr]->post("Your employer refused to register you."); break; }
+
+        std::string points = packet["Message"];
+        std::string name = extract_until_space(points);
+        remove_until_space(points);
+        std::string firstname = extract_until_space(points);
+        remove_until_space(points);
+        std::string login = extract_until_space(points);
+        remove_until_space(points);
+        std::string log_employer = extract_until_space(points);
+        remove_until_space(points);
+        std::string password = extract_until_space(points);
+        remove_until_space(points);
+        std::string Number_of_point = extract_until_space(points);  //The names of points must be sent without spaces. Space separates the names of different points
+        remove_until_space(points);
+        int num_pt = std::stoi(Number_of_point);
+        std::vector<std::string> Name_point = {Number_of_point};
+        std::string buff;
+        for(int i = 0; i < num_pt; i++)
+        {
+            buff = extract_until_space(points);
+            remove_until_space(points);
+            Name_point.push_back(buff);
+        }
+
+        std::string id_W;
+        gen_id(id_W);
+
+        Log_Pas[login] = {password, id_W, "W"};
+        ID_Worker[id_W] = {Addr};
+        Name_point.push_back(name);
+        Name_point.push_back(firstname);
+        Info_Worker[login] = Name_point;
+
+        change_on_message("W", Addr, clients[Addr]);
+
         break;
     }
     case P_closed:
@@ -215,77 +268,159 @@ void server::post_E(std::map<std::string, std::string> packet, std::shared_ptr<s
 }
 
 //A function for authorization and registration of clients
-void server::post(std::map<std::string, std::string> packet, std::shared_ptr<session> Client)
+void server::post(std::map<std::string, std::string> packet, std::shared_ptr<session> Client )
 {
     int pt = std::stoi(packet["Packet_type"]);
 
-    packettype pac_type = packettype(pt);
+    packettypein pac_type = packettypein(pt);
     switch (pac_type)
     {
-    case P_id:
+    case P_authorization:
     {
-        std::string id = packet["Message"];
+        std::string password = packet["Message"];
+        std::string login = extract_until_space(password);
+        remove_until_space(password);
 
-        if(!id.empty()) { id.pop_back(); }
-        if(!id.empty()) { id.pop_back(); }
+        if(!password.empty()) { password.pop_back(); }
+        if(!password.empty()) { password.pop_back(); }
 
-        if (ID_Employer.find(id) != ID_Employer.end()) 
+        auto it = Log_Pas.find(login);
+        std::string id = it->second[1];
+        if(it != Log_Pas.end() && it->second[0] == password)
         {
-            Client->handler_move(
-                [this, shared_client = Client, addr_str = packet["Addres"]](const std::string& message) {
-                    std::map<std::string, std::string> packet;
-                    std::string mes = message;
-                    packet["Addres"] = addr_str;
-                    if (!is_integer(extract_until_space(mes))) { packet["Packet_type"] = "404"; }
-                    else { packet["Packet_type"] = extract_until_space(mes); }
-                    remove_until_space(mes);
-                    packet["Message"] = mes; 
-                    post_E(packet, shared_client);
-                },
-                [this, weak = std::weak_ptr(Client)] { 
-                     if (auto shared = weak.lock(); shared && clients.erase(shared)) {
-                            std::map<std::string, std::string> packet;
-                            packet["Addres"] = "Server";
-                            packet["Packet_type"] = "0";
-                            packet["Message"] = "We are one less\n\r";
-                            post_E(packet, shared);
+            Client->post("Ok\n");
+            if(it->second[2] == "E")
+            {
+                auto it_id = ID_Employer.find(id);
+                if(it_id != ID_Employer.end())
+                {
+                    int count = 0;
+                    for(std::string addres : it_id->second)
+                    {
+                        if(addres == packet["Addres"]) { count++; }
                     }
-                });
-        } 
-        else if (ID_Worker.find(id) != ID_Worker.end()) 
-        {
-            Client->handler_move(
-                [this, shared_client = Client, addr_str = packet["Addres"]](const std::string& message) {
-                    std::map<std::string, std::string> packet;
-                    std::string mes = message;
-                    packet["Addres"] = addr_str;
-                    if (!is_integer(extract_until_space(mes))) { packet["Packet_type"] = "404"; }
-                    else { packet["Packet_type"] = extract_until_space(mes); }
-                    remove_until_space(mes);
-                    packet["Message"] = mes;
-                    post_W(packet, shared_client);
-                },
-                [this, weak = std::weak_ptr(Client)] { 
-                     if (auto shared = weak.lock(); shared && clients.erase(shared)) {
-                            std::map<std::string, std::string> packet;
-                            packet["Addres"] = "Server";
-                            packet["Packet_type"] = "0";
-                            packet["Message"] = "We are one less\n\r";
-                            post_W(packet, shared);
+                    if(!count) { it_id->second.push_back(packet["Addres"]); }
+                }
+                else
+                {
+                    std::vector addres = {packet["Addres"]};
+                    ID_Employer[id] = addres;
+                }
+            }
+            else
+            {
+                auto it_id = ID_Worker.find(id);
+                if(it_id != ID_Worker.end())
+                {
+                    int count = 0;
+                    for(std::string addres : it_id->second)
+                    {
+                        if(addres == packet["Addres"]) { count++; }
                     }
-                });
-        } 
-        else 
+                    if(!count) { it_id->second.push_back(packet["Addres"]); }
+                }
+                else
+                {
+                    std::vector addres = {packet["Addres"]};
+                    ID_Worker[id] = addres;
+                }
+            }
+            change_on_message(it->second[2], packet["Addres"], Client);
+        }
+        else
         {
-            Client->post("This client is not registered\n");
+            Client->post("Incorrect login or password\n");
+        }
+        break;
+    }
+    case P_registration:
+    {
+        std::string points = packet["Message"];
+        std::string name = extract_until_space(points);
+        remove_until_space(points);
+        std::string firstname = extract_until_space(points);
+        remove_until_space(points);
+        std::string login = extract_until_space(points);
+        if(Log_Pas.find(login) != Log_Pas.end())
+        {
+            Client->post("This user is already registered\n");
+            break;
+        }
+        remove_until_space(points);
+        std::string log_employer = extract_until_space(points);
+        auto it = Log_Pas.find(log_employer);
+        if(it == Log_Pas.end()||it->second[2] != "E")
+        {
+            Client->post("This employer does not exist\n");
+            break;
+        }
+
+        std::vector<std::string> Addres = ID_Employer.find(it->second[1])->second;
+        std::stringstream user, user_info;
+        user << name << ' ' << firstname;
+        user_info << packet["Addres"] << " " << packet["Message"];
+        for (std::string Addr : Addres)
+        {
+            clients[Addr]->post("An worker ");
+            clients[Addr]->post(user.str());
+            clients[Addr]->post(" wants to register for you\n\r");
+            clients[Addr]->post(user_info.str());
         }
 
         break;
     }
     default:
     {
+        Client->post("No\n");
         std::cout << "Unrecognized packet: " << pac_type << std::endl;
         break;
     }
+    }
+}
+
+
+void server::change_on_message(std::string Type_of_user, std::string addres, std::shared_ptr<session> Client)
+{
+    if(Type_of_user == "E") 
+    {
+        Client->handler_move(
+            [this, shared_client = Client, addr_str = addres](const std::string& message) {
+                std::map<std::string, std::string> packet;
+                std::string mes = message;
+                packet["Addres"] = addr_str;
+                if (!is_integer(extract_until_space(mes))) { packet["Packet_type"] = "404"; }
+                else { packet["Packet_type"] = extract_until_space(mes); }
+                remove_until_space(mes);
+                packet["Message"] = mes; 
+                post_E(packet, shared_client);
+            },
+            [this, weak = std::weak_ptr(Client), addr_str = addres] { 
+                if (auto shared = weak.lock(); shared && clients.erase(addr_str)) {
+                       std::cout << "We are one less\n\r";
+                }
+            });
+    } 
+    else if (Type_of_user == "W") 
+    {
+        Client->handler_move(
+            [this, shared_client = Client, addr_str = addres](const std::string& message) {
+                std::map<std::string, std::string> packet;
+                std::string mes = message;
+                packet["Addres"] = addr_str;
+                if (!is_integer(extract_until_space(mes))) { packet["Packet_type"] = "404"; }
+                else { packet["Packet_type"] = extract_until_space(mes); }
+                remove_until_space(mes);
+                packet["Message"] = mes;
+                post_W(packet, shared_client);
+            },
+            [this, weak = std::weak_ptr(Client), addr_str = addres] { 
+                if (auto shared = weak.lock(); shared && clients.erase(addr_str)) {
+                       std::cout << "We are one less\n\r";
+               }
+            });
+    } 
+    else 
+    {
+        Client->post("This client is not registered\n");
     }
 }

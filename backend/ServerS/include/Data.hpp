@@ -1,6 +1,13 @@
 #include <string>
-#include <unordered_set>
+#include <unordered_map>
+#include <vector>
 
-std::unordered_set<std::string> ID_Employer = {"10001", "10002"};
+std::unordered_map<std::string, std::vector<std::string>> ID_Employer;
 
-std::unordered_set<std::string> ID_Worker = {"10003", "10004", "10005", "10006"};
+std::unordered_map<std::string, std::vector<std::string>> ID_Worker;
+
+std::unordered_map<std::string, std::vector<std::string>> Log_Pas = {{"Mihail", {"1234", "10001", "E"}}, {"Toxa", {"4321", "10002", "E"}}};
+
+std::unordered_map<std::string, std::vector<std::string>> Info_Worker;
+
+std::unordered_map<std::string, std::vector<std::string>> Info_Emploer;

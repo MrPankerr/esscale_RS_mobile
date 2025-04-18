@@ -21,10 +21,11 @@
 #include <stdexcept>
 #include <memory>
 #include <sstream>
+#include <random>
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 #include <openssl/ssl.h>
-#include "C:/Project/Reiting/esscale_RS/backend/ServerS/include/Data.hpp" //specify your path
+#include "C:/Project/Reiting/esscale_RS/backend/ServerS/include/Data.hpp"
 
 namespace io = boost::asio;
 namespace ssl = io::ssl;
@@ -35,9 +36,13 @@ using namespace std::placeholders;
 using error_handler = std::function<void()>;
 using message_handler = std::function<void(const std::string&)>;
 
-enum packettype{
-    P_message,
+//Enumeration of package types
+enum packettypein{
+    P_authorization,
+    P_registration,
     P_id,
+    P_message,
+    P_confirmation,
     P_closed
 };
   
@@ -47,6 +52,9 @@ MYLIB_EXPORT std::string extract_until_space(const std::string& input);
 
 MYLIB_EXPORT void remove_until_space(std::string& str);
 
+MYLIB_EXPORT void gen_id(std::string id);
+
+//A class for handling a separate connection
 class MYLIB_EXPORT session: public std::enable_shared_from_this<session> {
     private:
         ssl::stream<tcp::socket> ssl_socket;
@@ -128,12 +136,13 @@ class MYLIB_EXPORT session: public std::enable_shared_from_this<session> {
         MYLIB_EXPORT tcp::socket& get_soc();
   };
   
+  //A class for handling all connections
   class MYLIB_EXPORT server {
     private:
         io::io_context& io_context;
         tcp::acceptor acceptor;
         std::optional<tcp::socket> socket;
-        std::unordered_set<std::shared_ptr<session>> clients;
+        std::unordered_map<std::string, std::shared_ptr<session>> clients;
         ssl::context ssl_context;
 
     public:
@@ -163,6 +172,7 @@ class MYLIB_EXPORT session: public std::enable_shared_from_this<session> {
         MYLIB_EXPORT void post_W(std::map<std::string, std::string> packet, std::shared_ptr<session> Client);
         MYLIB_EXPORT void post_E(std::map<std::string, std::string> packet, std::shared_ptr<session> Client);
         MYLIB_EXPORT void post(std::map<std::string, std::string> packet, std::shared_ptr<session> Client);
+        MYLIB_EXPORT void change_on_message(std::string Type_of_user, std::string addres, std::shared_ptr<session> Client);
   };
 
   #endif /* _LIBRARY_UTILITS_H_ */
