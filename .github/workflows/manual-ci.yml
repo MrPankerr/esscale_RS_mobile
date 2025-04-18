@@ -20,18 +20,18 @@ jobs:
           path: |
             ~/.cache/googletest
             ./backend/build/googletest
-          key: ${{ runner.os }}-googletest-${{ hashFiles('backend/ServerLib/BackendLibTest/CMakeLists.txt') }}
+          key: ${{ runner.os }}-googletest-${{ hashFiles('esscale_RS/backend/ServerLib/BackendLibTest/CMakeLists.txt') }}
           restore-keys: |
             ${{ runner.os }}-googletest-
 
       - name: Install dependencies
-        working-directory: ./backend/ServerLib/BackendLib
+        working-directory: esscale_RS/backend/ServerLib/BackendLib
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake g++ libssl-dev
 
       - name: Configure CMake and build project
-        working-directory: ./backend/ServerLib/BackendLib
+        working-directory: esscale_RS/backend/ServerLib/BackendLib
         shell: bash
         run: |
           mkdir -p build
@@ -40,7 +40,7 @@ jobs:
           cmake --build . --parallel 4
 
       - name: Run tests
-        working-directory: ./backend/ServerLib/BackendLib/build
+        working-directory: esscale_RS/backend/ServerLib/BackendLib/build
         run: |
           ctest --output-on-failure
 
