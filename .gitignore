@@ -3,6 +3,9 @@
 *.swp
 *.bak
 *.tmp
+*.key
+*.pem
+*.crt
 
 # IDE
 .vscode/
@@ -16,4 +19,5 @@
 
 # Автогенерируемые файлы
 build/
+bin/
 dist/

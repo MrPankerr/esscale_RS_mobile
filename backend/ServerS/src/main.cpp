@@ -1,5 +1,5 @@
-#include "headers.h"
-//#include "../TLSsecret/ecdhe_params.pem"
+#include "../ServerS/include/headers.h"
+//#include "../ServerS/TLSsecret/ecdhe_params.pem"
 
 int main(int argc, char* argv[])
 {

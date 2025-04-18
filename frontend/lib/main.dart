@@ -1,104 +1,88 @@
 import 'package:flutter/material.dart';
 
-void main() => runApp(MyApp());
+void main() => runApp(MaterialApp(
+  home: UserPanel(),
+));
 
-class MyApp extends StatelessWidget {
+class UserPanel extends StatefulWidget {
+  const UserPanel({super.key});
+
+  @override
+  State<UserPanel> createState() => _UserPanelState();
+}
+
+class _UserPanelState extends State<UserPanel> {
+
+  int _count = 0;
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(primaryColor: Colors.pinkAccent),
-      home:
-      Scaffold(
-        appBar: AppBar(
-          title: Text('esscale Apps',
-            style: TextStyle(
-                fontSize: 40,
-                fontWeight: FontWeight.bold,
-                color: Colors.amber,
-                fontFamily: 'PoiretOne'
-            )
-          ),
-          centerTitle: true,
-          backgroundColor: Colors.lightBlueAccent,
+    return Scaffold(
+      appBar: AppBar(
+        title: Text ('esscale Rating System',
+          style: TextStyle(
+            fontSize: 40,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+            fontFamily: 'PoiretOne',
+          )
         ),
+        centerTitle: true,
+        backgroundColor: Colors.green.shade400,
+      ),
 
-        body: Row( // или Column
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: SafeArea(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Column(
               children: [
-                Text('JOPKA'),
-                TextButton(onPressed: () {}, child: Text('JOPKA')),
-              ],
-            ),
-
-
-            Column(
-              children: [
-                Text('JOPKA'),
-                TextButton(onPressed: () {}, child: Text('JOPKA')),
+                SizedBox(
+                  height: 20,
+                ),
+                Padding(padding: EdgeInsets.only(top: 100),),
+                Text('Zayac Zaycev',
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Padding(padding: EdgeInsets.only(top: 10),),
+                CircleAvatar(
+                  backgroundImage: AssetImage('assets/zayac.png'),
+                  radius: 100,
+                ),
+                Padding(padding: EdgeInsets.only(top: 10),),
+                Row(
+                  children: [
+                    Icon(Icons.mail_outlined, size: 20,),
+                    Padding(padding: EdgeInsets.only(left: 10),),
+                    Text('adminzay@mail.ru', style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w300,
+                    ),),
+                  ],
+                ),
+                Padding(padding: EdgeInsets.only(top: 10),),
+                Text('Count: $_count'),
               ],
             ),
           ],
         ),
+      ),
 
-        /* // Контейнеры
-        Container(
-          color: Colors.deepPurpleAccent,
-          margin: EdgeInsets.symmetric(horizontal: 10.0, vertical: 50.0), // отступы снаружи
-          padding: EdgeInsets.fromLTRB(10, 50, 10, 50), // отступы внутри
-          child: Text('YaTrahal.ru'),
-        ),
-        */
-
-          /* // Картинки
-          child: Image(
-            image: AssetImage('assets/zayac.png'),
-            // image: NetworkImage('https://img-s-msn-com.akamaized.net/tenant/amp/entityid/BB1msOP8?w=0&h=0&q=60&m=6&f=jpg&u=t'),
-          ),
-          */
-
-          /* // Текстовая кнопка с иконкой
-          child: TextButton.icon(
-              onPressed: () {},
-              icon: Icon(Icons.accessible_forward),
-              label: Text('Газ Газ Газ'),
-          ),
-          */
-          
-          /* // Обведенная кнопка
-          child: OutlinedButton(
-              onPressed: () {},
-              child: Text('More, please!!!'),
-          ),
-          */
-          
-          /* // Парящая кнопка
-          child: ElevatedButton(
-              onPressed: () {},
-              style: ButtonStyle(
-                backgroundColor: WidgetStateProperty.all<Color>(Colors.black12),
-              ),
-              child: Text('More, please!!!'),
-          ),
-          */
-
-          /* // Иконка
-          child: Icon(
-              Icons.settings,
-              size: 45,
-              color: Colors.amber,
-          ),
-          */
-
-
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {},
-          backgroundColor: Colors.lightBlueAccent,
-          child: Text('Yamate kudosai'),
-        ),
-
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          setState(() {
+            _count++;
+          });
+          },
+        backgroundColor: Colors.amber,
+        child: Icon(Icons.close_rounded),
       ),
     );
   }
 }
+
+
+

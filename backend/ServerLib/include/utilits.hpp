@@ -25,7 +25,7 @@
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 #include <openssl/ssl.h>
-#include "C:/Project/Reiting/esscale_RS/backend/ServerS/include/Data.hpp"
+#include "Data.hpp"
 
 namespace io = boost::asio;
 namespace ssl = io::ssl;
