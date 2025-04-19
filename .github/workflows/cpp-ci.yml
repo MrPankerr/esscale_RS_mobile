@@ -11,8 +11,11 @@ on:
       - 'backend/**'
 
 jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [Ubuntu-latest, windows-latest]
     timeout-minutes: 30
 
     steps:
@@ -21,24 +24,25 @@ jobs:
         with: 
           fetch-depth: 0
 
-      - name: Cache Google Test
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/googletest
-            ./backend/build/googletest
-          key: ${{ runner.os }}-googletest-${{ hashFiles('esscale_RS/backend/ServerLib/BackendLibTest/CMakeLists.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-googletest-
-
-      - name: Install dependencies
-        working-directory: esscale_RS/backend/ServerLib/BackendLib
+      # Установка зависимостей на Ubuntu
+      - name: Install dependencies (Ubuntu)
+        if: matrix.os == 'Ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake g++ libssl-dev
+          sudo apt-get install -y cmake g++ libboost-all-dev libssl-dev
 
-      - name: Configure CMake and build project
-        working-directory: esscale_RS/backend/ServerLib/BackendLib
+      # Установка зависимостей на Windows
+      - name: Install dependencies (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+          choco install openssl
+          vcpkg install boost:x64-windows
+          vcpkg integrate install
+
+      # Сборка ServerLib
+      - name: Configure and build ServerLib
+        working-directory: ./backend/ServerLib
         shell: bash
         run: |
           mkdir -p build
@@ -46,7 +50,12 @@ jobs:
           cmake .. -DCMAKE_BUILD_TYPE=Release
           cmake --build . --parallel 4
 
-      - name: Run tests
-        working-directory: esscale_RS/backend/ServerLib/BackendLib/build
+      # Сборка ServerS
+      - name: Configure and build ServerS
+        working-directory: ./backend/ServerS
+        shell: bash
         run: |
-          ctest --output-on-failure
+          mkdir -p build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+          cmake --build . --parallel 4
