@@ -54,6 +54,8 @@ MYLIB_EXPORT void remove_until_space(std::string& str);
 
 MYLIB_EXPORT void gen_id(std::string id);
 
+MYLIB_EXPORT bool check_packet(int numb, const std::string& packet);
+
 //A class for handling a separate connection
 class MYLIB_EXPORT session: public std::enable_shared_from_this<session> {
     private:

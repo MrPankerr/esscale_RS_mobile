@@ -40,6 +40,7 @@ void remove_until_space(std::string& str)
     }
 }
 
+//A function that randomly generates an employee ID
 void gen_id(std::string id)
 {
     std::random_device rd;
@@ -50,6 +51,19 @@ void gen_id(std::string id)
     id = std::to_string(random_number);
     if(ID_Worker.find(id) != ID_Worker.end()) { gen_id(id); }
 }
+
+//A function that checks the completeness of the package
+bool check_packet(int numb, const std::string& packet)
+{
+    int counter = 0;
+    for(char c : packet)
+    {
+        if (c == ' ') { counter++; }
+    }
+    if (counter == numb) { return true; }
+    else { return false; }
+}
+
 
 
 //-------------------------------------Session Methods-----------------------------------------------//
@@ -209,12 +223,18 @@ void server::post_E(std::map<std::string, std::string> packet, std::shared_ptr<s
     }
     case P_confirmation:
     {
+        if(!check_packet(8, packet["Message"]))
+        {
+            Client->post("Wrong Packet\n\r");
+            break;
+        }
+
         std::string conf = extract_until_space(packet["Message"]);
         remove_until_space(packet["Message"]);
         std::string Addr = extract_until_space(packet["Message"]);
         remove_until_space(packet["Message"]);
 
-        if(conf == "No") { clients[Addr]->post("Your employer refused to register you."); break; }
+        if(conf == "No") { clients[Addr]->post("Your employer refused to register you.\n\r"); break; }
 
         std::string points = packet["Message"];
         std::string name = extract_until_space(points);
@@ -277,6 +297,11 @@ void server::post(std::map<std::string, std::string> packet, std::shared_ptr<ses
     {
     case P_authorization:
     {
+        if(!check_packet(1, packet["Message"]))
+        {
+            Client->post("Wrong Packet\n\r");
+            break;
+        }
         std::string password = packet["Message"];
         std::string login = extract_until_space(password);
         remove_until_space(password);
@@ -285,56 +310,63 @@ void server::post(std::map<std::string, std::string> packet, std::shared_ptr<ses
         if(!password.empty()) { password.pop_back(); }
 
         auto it = Log_Pas.find(login);
-        std::string id = it->second[1];
-        if(it != Log_Pas.end() && it->second[0] == password)
+        if(it != Log_Pas.end())
         {
-            Client->post("Ok\n");
-            if(it->second[2] == "E")
+            std::string id = it->second[1];
+            if(it->second[0] == password)
             {
-                auto it_id = ID_Employer.find(id);
-                if(it_id != ID_Employer.end())
+                Client->post("Ok\n");
+                if(it->second[2] == "E")
                 {
-                    int count = 0;
-                    for(std::string addres : it_id->second)
+                    auto it_id = ID_Employer.find(id);
+                    if(it_id != ID_Employer.end())
                     {
-                        if(addres == packet["Addres"]) { count++; }
+                        int count = 0;
+                        for(std::string addres : it_id->second)
+                        {
+                            if(addres == packet["Addres"]) { count++; }
+                        }
+                        if(!count) { it_id->second.push_back(packet["Addres"]); }
                     }
-                    if(!count) { it_id->second.push_back(packet["Addres"]); }
+                    else
+                    {
+                        std::vector addres = {packet["Addres"]};
+                        ID_Employer[id] = addres;
+                    }
                 }
                 else
                 {
-                    std::vector addres = {packet["Addres"]};
-                    ID_Employer[id] = addres;
-                }
-            }
-            else
-            {
-                auto it_id = ID_Worker.find(id);
-                if(it_id != ID_Worker.end())
-                {
-                    int count = 0;
-                    for(std::string addres : it_id->second)
+                    auto it_id = ID_Worker.find(id);
+                    if(it_id != ID_Worker.end())
                     {
-                        if(addres == packet["Addres"]) { count++; }
+                        int count = 0;
+                        for(std::string addres : it_id->second)
+                        {
+                            if(addres == packet["Addres"]) { count++; }
+                        }
+                        if(!count) { it_id->second.push_back(packet["Addres"]); }
                     }
-                    if(!count) { it_id->second.push_back(packet["Addres"]); }
+                    else
+                    {
+                        std::vector addres = {packet["Addres"]};
+                        ID_Worker[id] = addres;
+                    }
                 }
-                else
-                {
-                    std::vector addres = {packet["Addres"]};
-                    ID_Worker[id] = addres;
-                }
+                change_on_message(it->second[2], packet["Addres"], Client);
             }
-            change_on_message(it->second[2], packet["Addres"], Client);
+            else { Client->post("Incorrect login or password\n"); }
         }
-        else
-        {
-            Client->post("Incorrect login or password\n");
-        }
+        else { Client->post("Incorrect login or password\n"); }
+
         break;
     }
     case P_registration:
     {
+        if(!check_packet(6, packet["Message"]))
+        {
+            Client->post("Wrong Packet\n\r");
+            break;
+        }
         std::string points = packet["Message"];
         std::string name = extract_until_space(points);
         remove_until_space(points);
@@ -361,10 +393,13 @@ void server::post(std::map<std::string, std::string> packet, std::shared_ptr<ses
         user_info << packet["Addres"] << " " << packet["Message"];
         for (std::string Addr : Addres)
         {
-            clients[Addr]->post("An worker ");
-            clients[Addr]->post(user.str());
-            clients[Addr]->post(" wants to register for you\n\r");
-            clients[Addr]->post(user_info.str());
+            if (clients.find(Addr) != clients.end())
+            {
+                clients[Addr]->post("An worker ");
+                clients[Addr]->post(user.str());
+                clients[Addr]->post(" wants to register for you\n\r");
+                clients[Addr]->post(user_info.str());
+            }
         }
 
         break;
@@ -378,7 +413,7 @@ void server::post(std::map<std::string, std::string> packet, std::shared_ptr<ses
     }
 }
 
-
+//A method that modifies the event handler by user type
 void server::change_on_message(std::string Type_of_user, std::string addres, std::shared_ptr<session> Client)
 {
     if(Type_of_user == "E") 
