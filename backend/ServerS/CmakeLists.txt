@@ -21,7 +21,6 @@ configure_file(
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories("${PROJECT_BINARY_DIR}")
-include_directories("${CMAKE_SOURCE_DIR}/../ServerLib/include")
 
 cmake_policy(SET CMP0144 NEW)
 cmake_policy(SET CMP0167 NEW)
@@ -79,10 +78,10 @@ target_link_libraries(${PROJECT_NAME}
     libBackend.dll.a
 )
  
-if(WIN32)
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_FILE:ServerLib>
-        $<TARGET_FILE_DIR:${PROJECT_NAME}>
-    )
-endif()
+# if(WIN32)
+#     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+#         COMMAND ${CMAKE_COMMAND} -E copy_if_different
+#         $<TARGET_FILE:ServerLib>
+#         $<TARGET_FILE_DIR:${PROJECT_NAME}>
+#     )
+# endif()

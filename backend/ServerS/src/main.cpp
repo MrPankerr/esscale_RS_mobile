@@ -1,4 +1,4 @@
-#include "../ServerS/include/headers.h"
+#include "headers.h"
 //#include "../ServerS/TLSsecret/ecdhe_params.pem"
 
 int main(int argc, char* argv[])

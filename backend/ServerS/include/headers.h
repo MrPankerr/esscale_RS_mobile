@@ -5,7 +5,7 @@
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 #include <openssl/ssl.h>
-#include "../ServerLib/include/utilits.hpp"
+#include "../../ServerLib/include/utilits.hpp"
 
 namespace po = boost::program_options; // namespace for interacting with the console
 namespace io = boost::asio;
