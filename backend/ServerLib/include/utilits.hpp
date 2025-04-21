@@ -46,18 +46,18 @@ enum packettypein{
     P_closed
 };
   
-MYLIB_EXPORT bool is_integer(const std::string& s);
+bool is_integer(const std::string& s);
 
-MYLIB_EXPORT std::string extract_until_space(const std::string& input);
+std::string extract_until_symbol(const std::string& input, char symbol);
 
-MYLIB_EXPORT void remove_until_space(std::string& str);
+void remove_until_symbol(std::string& str, char symbol);
 
-MYLIB_EXPORT void gen_id(std::string id);
+void gen_id(std::string id);
 
-MYLIB_EXPORT bool check_packet(int numb, const std::string& packet);
+bool check_packet(int numb, const std::string& packet);
 
 //A class for handling a separate connection
-class MYLIB_EXPORT session: public std::enable_shared_from_this<session> {
+class session: public std::enable_shared_from_this<session> {
     private:
         ssl::stream<tcp::socket> ssl_socket;
         io::streambuf streambuf;
@@ -130,12 +130,12 @@ class MYLIB_EXPORT session: public std::enable_shared_from_this<session> {
                 });
         }
 
-        MYLIB_EXPORT void handler_move(message_handler&& on_message, error_handler&& on_error);
-        MYLIB_EXPORT void start(message_handler&& on_message, error_handler&& on_error);
-        MYLIB_EXPORT void post(const std::string& message);
-        MYLIB_EXPORT void async_handshake();
-        MYLIB_EXPORT void session_close();
-        MYLIB_EXPORT tcp::socket& get_soc();
+        void handler_move(message_handler&& on_message, error_handler&& on_error);
+        void start(message_handler&& on_message, error_handler&& on_error);
+        void post(const std::string& message);
+        void async_handshake();
+        void session_close();
+        tcp::socket& get_soc();
   };
   
   //A class for handling all connections
@@ -171,10 +171,10 @@ class MYLIB_EXPORT session: public std::enable_shared_from_this<session> {
             }
   
         MYLIB_EXPORT void async_accept();
-        MYLIB_EXPORT void post_W(std::map<std::string, std::string> packet, std::shared_ptr<session> Client);
-        MYLIB_EXPORT void post_E(std::map<std::string, std::string> packet, std::shared_ptr<session> Client);
-        MYLIB_EXPORT void post(std::map<std::string, std::string> packet, std::shared_ptr<session> Client);
-        MYLIB_EXPORT void change_on_message(std::string Type_of_user, std::string addres, std::shared_ptr<session> Client);
+        void post_W(std::map<std::string, std::string> packet, std::shared_ptr<session> Client);
+        void post_E(std::map<std::string, std::string> packet, std::shared_ptr<session> Client);
+        void post(std::map<std::string, std::string> packet, std::shared_ptr<session> Client);
+        void change_on_message(std::string Type_of_user, std::string addres, std::shared_ptr<session> Client);
   };
 
   #endif /* _LIBRARY_UTILITS_H_ */

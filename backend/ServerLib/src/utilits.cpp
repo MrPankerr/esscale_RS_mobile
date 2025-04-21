@@ -18,11 +18,11 @@ bool is_integer(const std::string& s)
 
 //the function runs through the contents of the line 
 //to the first space and outputs the contents of this line to the space. For correct ID reading
-std::string extract_until_space(const std::string& input) 
+std::string extract_until_symbol(const std::string& input, char symbol) 
 {
     std::string result;
     for (char c : input) {
-        if (c == ' ') { break; }
+        if (c == symbol) { break; }
         result += c;
     }
     return result;
@@ -30,9 +30,9 @@ std::string extract_until_space(const std::string& input)
 
 //deletes everything that was in the line before the first space. 
 //To extract a text message without an ID from a string
-void remove_until_space(std::string& str) 
+void remove_until_symbol(std::string& str, char symbol) 
 {
-    size_t space_pos = str.find(' ');
+    size_t space_pos = str.find(symbol);
     if (space_pos != std::string::npos) {
         str.erase(0, space_pos + 1); // Удаляем до пробела включительно (+1 для самого пробела)
     } else {
@@ -86,7 +86,6 @@ void session::start(message_handler&& on_message, error_handler&& on_error)
 
     async_read();
 }
-
 
 //A function for sending a message to a client
 void session::post(const std::string& message)
@@ -158,9 +157,9 @@ void server::async_accept()
                 std::map<std::string, std::string> packet;
                 std::string mes = message;
                 packet["Addres"] = addr_str;
-                if (!is_integer(extract_until_space(mes))) { packet["Packet_type"] = "404"; }
-                else { packet["Packet_type"] = extract_until_space(mes); }
-                remove_until_space(mes);
+                if (!is_integer(extract_until_symbol(mes, ' '))) { packet["Packet_type"] = "404"; }
+                else { packet["Packet_type"] = extract_until_symbol(mes, ' '); }
+                remove_until_symbol(mes, ' ');
                 packet["Message"] = mes; 
                 post(packet, shared_client);
             },
@@ -186,6 +185,7 @@ void server::post_W(std::map<std::string, std::string> packet, std::shared_ptr<s
     {
         for (auto& client : clients) {
             client.second->post(packet["Addres"]);
+            client.second->post(" ");
             client.second->post(packet["Message"]);
         }
         break;
@@ -217,6 +217,7 @@ void server::post_E(std::map<std::string, std::string> packet, std::shared_ptr<s
     {
         for (auto& client : clients) {
             client.second->post(packet["Addres"]);
+            client.second->post(" ");
             client.second->post(packet["Message"]);
         }
         break;
@@ -229,33 +230,33 @@ void server::post_E(std::map<std::string, std::string> packet, std::shared_ptr<s
             break;
         }
 
-        std::string conf = extract_until_space(packet["Message"]);
-        remove_until_space(packet["Message"]);
-        std::string Addr = extract_until_space(packet["Message"]);
-        remove_until_space(packet["Message"]);
+        std::string conf = extract_until_symbol(packet["Message"], ' ');
+        remove_until_symbol(packet["Message"], ' ');
+        std::string Addr = extract_until_symbol(packet["Message"], ' ');
+        remove_until_symbol(packet["Message"], ' ');
 
         if(conf == "No") { clients[Addr]->post("Your employer refused to register you.\n\r"); break; }
 
         std::string points = packet["Message"];
-        std::string name = extract_until_space(points);
-        remove_until_space(points);
-        std::string firstname = extract_until_space(points);
-        remove_until_space(points);
-        std::string login = extract_until_space(points);
-        remove_until_space(points);
-        std::string log_employer = extract_until_space(points);
-        remove_until_space(points);
-        std::string password = extract_until_space(points);
-        remove_until_space(points);
-        std::string Number_of_point = extract_until_space(points);  //The names of points must be sent without spaces. Space separates the names of different points
-        remove_until_space(points);
+        std::string name = extract_until_symbol(points, ' ');
+        remove_until_symbol(points, ' ');
+        std::string firstname = extract_until_symbol(points, ' ');
+        remove_until_symbol(points, ' ');
+        std::string login = extract_until_symbol(points, ' ');
+        remove_until_symbol(points, ' ');
+        std::string log_employer = extract_until_symbol(points, ' ');
+        remove_until_symbol(points, ' ');
+        std::string password = extract_until_symbol(points, ' ');
+        remove_until_symbol(points, ' ');
+        std::string Number_of_point = extract_until_symbol(points, ' ');  //Symbol | separates the names of different points
+        remove_until_symbol(points, ' ');
         int num_pt = std::stoi(Number_of_point);
         std::vector<std::string> Name_point = {Number_of_point};
         std::string buff;
         for(int i = 0; i < num_pt; i++)
         {
-            buff = extract_until_space(points);
-            remove_until_space(points);
+            buff = extract_until_symbol(points, '|');
+            remove_until_symbol(points, '|');
             Name_point.push_back(buff);
         }
 
@@ -303,8 +304,8 @@ void server::post(std::map<std::string, std::string> packet, std::shared_ptr<ses
             break;
         }
         std::string password = packet["Message"];
-        std::string login = extract_until_space(password);
-        remove_until_space(password);
+        std::string login = extract_until_symbol(password, ' ');
+        remove_until_symbol(password, ' ');
 
         if(!password.empty()) { password.pop_back(); }
         if(!password.empty()) { password.pop_back(); }
@@ -368,18 +369,18 @@ void server::post(std::map<std::string, std::string> packet, std::shared_ptr<ses
             break;
         }
         std::string points = packet["Message"];
-        std::string name = extract_until_space(points);
-        remove_until_space(points);
-        std::string firstname = extract_until_space(points);
-        remove_until_space(points);
-        std::string login = extract_until_space(points);
+        std::string name = extract_until_symbol(points, ' ');
+        remove_until_symbol(points, ' ');
+        std::string firstname = extract_until_symbol(points, ' ');
+        remove_until_symbol(points, ' ');
+        std::string login = extract_until_symbol(points, ' ');
         if(Log_Pas.find(login) != Log_Pas.end())
         {
             Client->post("This user is already registered\n");
             break;
         }
-        remove_until_space(points);
-        std::string log_employer = extract_until_space(points);
+        remove_until_symbol(points, ' ');
+        std::string log_employer = extract_until_symbol(points, ' ');
         auto it = Log_Pas.find(log_employer);
         if(it == Log_Pas.end()||it->second[2] != "E")
         {
@@ -423,9 +424,9 @@ void server::change_on_message(std::string Type_of_user, std::string addres, std
                 std::map<std::string, std::string> packet;
                 std::string mes = message;
                 packet["Addres"] = addr_str;
-                if (!is_integer(extract_until_space(mes))) { packet["Packet_type"] = "404"; }
-                else { packet["Packet_type"] = extract_until_space(mes); }
-                remove_until_space(mes);
+                if (!is_integer(extract_until_symbol(mes, ' '))) { packet["Packet_type"] = "404"; }
+                else { packet["Packet_type"] = extract_until_symbol(mes, ' '); }
+                remove_until_symbol(mes, ' ');
                 packet["Message"] = mes; 
                 post_E(packet, shared_client);
             },
@@ -442,9 +443,9 @@ void server::change_on_message(std::string Type_of_user, std::string addres, std
                 std::map<std::string, std::string> packet;
                 std::string mes = message;
                 packet["Addres"] = addr_str;
-                if (!is_integer(extract_until_space(mes))) { packet["Packet_type"] = "404"; }
-                else { packet["Packet_type"] = extract_until_space(mes); }
-                remove_until_space(mes);
+                if (!is_integer(extract_until_symbol(mes, ' '))) { packet["Packet_type"] = "404"; }
+                else { packet["Packet_type"] = extract_until_symbol(mes, ' '); }
+                remove_until_symbol(mes, ' ');
                 packet["Message"] = mes;
                 post_W(packet, shared_client);
             },
